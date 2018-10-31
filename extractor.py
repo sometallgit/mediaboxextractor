@@ -3,6 +3,7 @@
 import os
 import datetime
 import exifread
+import argparse
 
 from PyPDF3 import PdfFileReader
 
@@ -69,23 +70,41 @@ processors = {
 }
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Simple tool to extract'
+                                                 'image\'s width height value and convert it to mm')
+    parser.add_argument('-f', '--filename',
+                        help='Override default output file name')
+
+    parser.add_argument('-o', '--stdout',
+                        help='Print result to stdout',
+                        action='store_true')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
+    args = parse_args()
     files = lookup()
     result = []
     for filetype in files:
         processor = processors.get(filetype)
         for filename in files.get(filetype):
             result.append(processor(filename))
+            if args.stdout is True:
+                print(processor(filename))
 
     dirname = os.path.dirname(os.path.realpath(__file__))
-    report = open(
-        '{}_{}-{}.csv'.format(
-            os.path.basename(dirname),
-            os.path.basename(os.path.dirname(dirname)),
-            datetime.date.today().year
-        ),
-        'w+'
-    )
+
+    if args.filename is not None:
+        filename = args.filename
+    else:
+        filename = '{}_{}-{}.csv'.format(
+                    os.path.basename(dirname),
+                    os.path.basename(os.path.dirname(dirname)),
+                    datetime.date.today().year
+                   )
+
+    report = open(filename, 'w+')
     report.write('sep=;\n')
     report.writelines(result)
     report.close()
